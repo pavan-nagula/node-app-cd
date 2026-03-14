@@ -1,0 +1,50 @@
+name: Deploy to Kubernetes (CD)
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout CD repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Install kubectl
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: "latest"
+
+      # Step 3: Load kubeconfig from GitHub Secret
+      - name: Load kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
+
+      # Step 4: Apply Kubernetes manifests (deployment + service)
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f deployment.yaml
+          kubectl apply -f service.yaml
+
+      # Step 5: Wait for deployment rollout to complete
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/node-app --timeout=120s
+
+      # Step 6: Show pods and services for debugging
+      - name: Show cluster status
+        run: |
+          echo "Pods:"
+          kubectl get pods -o wide
+          echo ""
+          echo "Services:"
+          kubectl get svc -o wide
