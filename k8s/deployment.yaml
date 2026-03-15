@@ -17,6 +17,6 @@ spec:
       containers:
         - name: node-app
           image: ghcr.io/pavan-nagula/node-app:latest
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
